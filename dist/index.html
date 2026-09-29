@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Laboratorio interactivo de redes de eClassVirtual." />
+  <title>eClassVirtual Network Lab</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .device-node{border:0;background:transparent;color:inherit;font:inherit;padding:8px;border-radius:12px;cursor:pointer}
+    .device-node:hover{background:#f0f6ff}.device-node.active{background:#eaf3ff;box-shadow:0 0 0 2px #1c79ed2c}
+    .device-tabs{display:flex!important;gap:4px!important;margin-left:auto}
+    .device-tabs button{border:1px solid #28405d!important;background:#10243c!important;color:#8fa9c5!important;border-radius:6px!important;padding:5px 9px!important;font-size:11px!important;font-weight:800;cursor:pointer}
+    .device-tabs button.active{background:#1574e8!important;border-color:#2f8cff!important;color:#fff!important}
+    .unit-count{font-size:12px;font-weight:800;color:#0868e9}.lab-list{padding:8px}.lab-item{width:100%;border:0;background:transparent;display:grid;grid-template-columns:28px 1fr 18px;gap:8px;align-items:center;text-align:left;padding:9px;border-radius:8px;color:#4e5d73;cursor:pointer}.lab-item:hover{background:#f3f7fc}.lab-item.active{background:#eaf3ff;color:#075fcf}.lab-item .lab-num{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid #cbd7e5;font-size:11px;font-weight:800}.lab-item.done .lab-num{background:#18b67b;border-color:#18b67b;color:#fff}.lab-item strong{font-size:12px}.lab-item small{font-size:10px;color:#8090a5;display:block;margin-top:2px}.lab-item .state{font-size:12px;color:#18a975}
+    @media(max-width:640px){.terminal-head{height:auto;min-height:66px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}.device-tabs{order:3;width:100%;margin-top:6px}.device-tabs button{flex:1}.topology .device-node{min-width:68px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" id="homeBrand" aria-label="Volver a Mis unidades">
+      <span class="brand-mark">e</span>
+      <span><strong>eClassVirtual</strong><small>Network Lab</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="session"><i></i> Sesión activa</span>
+      <button class="profile-pill" id="profileBtn" title="Cambiar alias del estudiante">
+        <span class="profile-copy"><small id="studentName">Estudiante</small><strong><span id="studentXP">0</span> XP · 🔥 <span id="studentStreak">0</span></strong></span>
+        <span class="avatar" id="studentAvatar">ES</span>
+      </button>
+      <button class="auth-button" id="authBtn">Ingresar</button>
+      <button class="icon-button" id="resetTop" title="Reiniciar laboratorio" aria-label="Reiniciar laboratorio">↻</button>
+    </div>
+  </header>
+
+  <main id="unitsHome" class="units-home">
+    <section class="units-hero">
+      <div><span class="units-eyebrow">ECLASSVIRTUAL NETWORK LAB</span><h1 id="activeCourseTitle">Ruta CCNA</h1><p id="activeCourseDescription">Prácticas para CCNA 200-301 v2.0 · Ruta en construcción</p></div>
+      <div class="units-summary-grid" aria-label="Resumen general del estudiante">
+        <div class="units-summary"><strong id="homeXP">0 XP</strong><span>XP acumulados</span></div>
+        <div class="units-summary"><strong id="homeLabsDone">0</strong><span>Laboratorios completados</span></div>
+        <div class="units-summary"><strong id="homeUnitsDone">0 unidades</strong><span>Unidades completadas</span></div>
+      </div>
+    </section>
+    <nav class="course-picker" id="coursePicker" aria-label="Rutas de aprendizaje" hidden></nav>
+    <section class="continue-card" id="continueCard">
+      <div><span>CONTINÚA DONDE QUEDASTE</span><h2 id="continueTitle">Unidad 1 · VLAN y conectividad</h2><p id="continueText">Retoma tu próxima misión pendiente.</p></div>
+      <button id="continueUnitBtn">Continuar aprendizaje →</button>
+    </section>
+    <section class="course-modules" id="unitCatalog" aria-label="Módulos y unidades disponibles"></section>
+    <section class="home-progress-grid" aria-label="Logros y clasificación general">
+      <article class="card achievements-card">
+        <div class="card-title"><div><span class="step">★</span><strong>Insignias de unidades</strong></div><span class="unit-count" id="badgeCount">0 de 2 obtenidas</span></div>
+        <p class="home-card-copy">Cada insignia representa una unidad completada de tu ruta.</p>
+        <div class="badge-list unit-badge-list" id="badgeList"></div>
+      </article>
+      <article class="card leaderboard-card">
+        <div class="card-title"><div><span class="step">🏅</span><strong>Liga semanal</strong></div><span class="demo-pill" id="leagueStatus">Demostración</span></div>
+        <p class="home-card-copy">La clasificación suma los XP ganados en todas las unidades.</p>
+        <div class="leaderboard" id="leaderboard"></div>
+        <p class="ranking-note" id="rankingNote">Gana XP para subir posiciones.</p>
+      </article>
+    </section>
+  </main>
+
+  <main id="labView" data-unit-view hidden>
+    <button class="back-units" data-back-units>← Todas las unidades</button>
+    <section class="lab-heading">
+      <div>
+        <div class="crumb">UNIDAD 1 · VLAN Y CONECTIVIDAD <span>/</span> <b id="labCode">LAB-001</b></div>
+        <h1 id="labTitle">Crear una VLAN</h1>
+        <p id="labSubtitle">Crea la primera VLAN de Usuarios en el switch.</p>
+        <div class="guide-actions" aria-label="Ayuda del laboratorio">
+          <button id="instructionsBtn" class="guide-button"><span aria-hidden="true">▣</span> Instrucciones</button>
+          <button id="howItWorksBtn" class="guide-button secondary"><span aria-hidden="true">?</span> Cómo funciona</button>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progreso de la unidad</span><strong id="progressText">0%</strong></div>
+        <div class="progress"><span id="progressBar"></span></div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="left-column">
+        <article class="card topology-card">
+          <div class="card-title"><div><span class="step">1</span><strong>Topología</strong></div><span class="status-pill"><i></i> En línea</span></div>
+          <div class="topology" aria-label="PC1 conectado a SW1 y SW1 conectado a PC2">
+            <button class="node pc device-node" data-device="PC1"><span class="screen">›_</span><strong>PC1</strong><small>Usuarios</small></button>
+            <div class="link"><span>Gi0/1</span><i></i></div>
+            <button class="node switch active device-node" data-device="SW1"><span class="switch-icon"><b></b><b></b><b></b><b></b></span><strong>SW1</strong><small>Cisco IOS</small></button>
+            <div class="link"><span>Gi0/2</span><i></i></div>
+            <button class="node pc device-node" data-device="PC2"><span class="screen">›_</span><strong>PC2</strong><small>Servidores</small></button>
+          </div>
+        </article>
+
+        <article class="terminal-card">
+          <div class="terminal-head">
+            <div><span class="step dark">2</span><strong id="terminalTitle">Terminal · SW1</strong><span class="connected"><i></i> conectado</span><span class="save-status" id="saveStatus">Sin sincronizar</span></div>
+            <div class="device-tabs" aria-label="Seleccionar equipo"><button class="active" data-device="SW1">SW1</button><button data-device="PC1">PC1</button><button data-device="PC2">PC2</button></div>
+            <button id="clearBtn">Limpiar</button>
+          </div>
+          <div class="terminal" id="terminal" tabindex="0" aria-label="Terminal Cisco IOS">
+            <div id="output" class="output">Conectando a SW1...<br>Conexión establecida.<br><br>Cisco IOS Software, eClassVirtual Network Lab<br>Escribe <span class="cyan">help</span> para ver los comandos disponibles.<br><br></div>
+            <div class="input-row"><span id="prompt">SW1&gt;</span><input id="commandInput" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Comando Cisco IOS" autofocus /></div>
+          </div>
+          <div class="terminal-tip"><span>⌁</span><span id="terminalHint"><strong>Consejo:</strong> comienza escribiendo <code>enable</code> y presiona Enter.</span></div>
+        </article>
+      </div>
+
+      <aside class="side-column">
+        <article class="card unit-card">
+          <div class="card-title"><div><span class="step">U1</span><strong>Ruta de la unidad</strong></div><span class="unit-count" id="unitCount">0/6</span></div>
+          <div class="lab-list" id="labList"></div>
+        </article>
+        <article class="card mission-card">
+          <div class="card-title"><div><span class="step">3</span><strong>Tu misión</strong></div><span class="points">Hasta 150 XP</span></div>
+          <p class="mission-copy" id="missionCopy">Crea VLAN 10 y asígnale el nombre USERS.</p>
+          <p class="xp-rules">100 XP por completar · +20 al primer intento · +30 si escribes los comandos por tu cuenta</p>
+          <div class="objectives" id="objectives"></div>
+          <button class="validate" id="validateBtn" disabled>Completa los objetivos para validar</button>
+          <button class="reset" id="resetBtn">↻ Reiniciar configuración</button>
+          <div id="result" class="result" role="status"></div>
+        </article>
+
+      </aside>
+    </section>
+
+    <section class="secondary-grid commands-only" aria-label="Recursos del laboratorio">
+        <article class="card commands-card">
+          <div class="card-title"><div><span class="bulb">◇</span><strong>Ayuda: comandos sugeridos</strong></div><span class="help-tag">Opcional</span></div>
+          <p class="help-explainer">Al usar uno de estos botones, el comando se prepara en el terminal. Podrás completar la misión, pero no recibirás el bono de +30 XP.</p>
+          <button class="command-chip" data-cmd="enable"><code>enable</code><span>Copiar</span></button>
+          <button class="command-chip" data-cmd="configure terminal"><code>configure terminal</code><span>Copiar</span></button>
+          <button class="command-chip" data-cmd="show vlan brief"><code>show vlan brief</code><span>Copiar</span></button>
+          <p id="commandsHelp">En SW1 puedes usar abreviaciones como <code>ena</code>, <code>conf t</code> y <code>sh run</code>. Guarda los cambios con <code>wr</code> o <code>copy run start</code>.</p>
+        </article>
+    </section>
+  </main>
+
+  <main id="unit2View" data-unit-view hidden>
+    <button class="back-units" data-back-units>← Todas las unidades</button>
+    <section class="lab-heading">
+      <div><div class="crumb">UNIDAD 2 · VLAN Y ENLACES TRONCALES <span>/</span> <b id="u2LabCode">LAB-201</b></div><h1 id="u2LabTitle">Trunk entre dos switches</h1><p id="u2LabSubtitle">Conecta equipos de una misma VLAN a través de SW1 y SW2.</p><div class="guide-actions"><button id="u2InstructionsBtn" class="guide-button"><span>▣</span> Instrucciones</button><button id="u2HowBtn" class="guide-button secondary"><span>?</span> Cómo funciona</button></div></div>
+      <div class="progress-wrap"><div class="progress-label"><span>Progreso de la unidad</span><strong id="u2ProgressText">0%</strong></div><div class="progress"><span id="u2ProgressBar"></span></div></div>
+    </section>
+    <section class="workspace">
+      <div class="left-column">
+        <article class="card topology-card"><div class="card-title"><div><span class="step">1</span><strong>Topología</strong></div><span class="status-pill"><i></i> En línea</span></div>
+          <div class="topology u2-topology" aria-label="PC1 conectado a SW1, SW1 conectado a SW2 y SW2 conectado a PC2">
+            <button class="node pc device-node" data-u2-device="PC1"><span class="screen">›_</span><strong>PC1</strong><small>Usuarios</small></button><div class="link"><span>Gi0/1</span><i></i></div>
+            <button class="node switch active device-node" data-u2-device="SW1"><span class="switch-icon"><b></b><b></b><b></b><b></b></span><strong>SW1</strong><small>Cisco IOS</small></button><div class="link trunk-link"><span>Gi0/2 · TRUNK</span><i></i></div>
+            <button class="node switch device-node" data-u2-device="SW2"><span class="switch-icon"><b></b><b></b><b></b><b></b></span><strong>SW2</strong><small>Cisco IOS</small></button><div class="link"><span>Gi0/1</span><i></i></div>
+            <button class="node pc device-node" data-u2-device="PC2"><span class="screen">›_</span><strong>PC2</strong><small>Usuarios</small></button>
+          </div>
+        </article>
+        <article class="terminal-card"><div class="terminal-head"><div><span class="step dark">2</span><strong id="u2TerminalTitle">Terminal · SW1</strong><span class="connected"><i></i> conectado</span><span class="save-status" id="u2SaveStatus">Sin sincronizar</span></div><div class="device-tabs u2-tabs"><button class="active" data-u2-device="SW1">SW1</button><button data-u2-device="SW2">SW2</button><button data-u2-device="PC1">PC1</button><button data-u2-device="PC2">PC2</button></div><button id="u2ClearBtn">Limpiar</button></div>
+          <div class="terminal" id="u2Terminal" tabindex="0"><div id="u2Output" class="output"></div><div class="input-row"><span id="u2Prompt">SW1&gt;</span><input id="u2Input" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Comando del laboratorio trunk"></div></div>
+          <div class="terminal-tip"><span>⌁</span><span id="u2Hint"><strong>Consejo:</strong> comienza configurando la VLAN 10 en ambos switches.</span></div>
+        </article>
+      </div>
+      <aside class="side-column">
+        <article class="card unit-card"><div class="card-title"><div><span class="step">U2</span><strong>Ruta de la unidad</strong></div><span class="unit-count" id="u2Count">0/6</span></div><div class="lab-list" id="u2LabList"></div></article>
+        <article class="card mission-card"><div class="card-title"><div><span class="step">3</span><strong>Tu misión</strong></div><span class="points">Hasta 150 XP</span></div><p class="mission-copy" id="u2MissionCopy">Configura la VLAN 10 y un enlace trunk entre SW1 y SW2. Conecta PC1 y PC2 a la VLAN 10, configura sus direcciones y gateway, y comprueba la conectividad.</p><p class="xp-rules">100 XP por completar · +20 al primer intento · +30 sin ayudas</p><div class="objectives" id="u2Objectives"></div><button class="validate" id="u2ValidateBtn" disabled>Completa los objetivos para validar</button><button class="reset" id="u2ResetBtn">↻ Reiniciar configuración</button><div id="u2Result" class="result"></div></article>
+      </aside>
+    </section>
+  </main>
+
+  <main id="unit3View" data-unit-view hidden>
+    <button class="back-units" data-back-units>← Todas las unidades</button>
+    <section class="lab-heading">
+      <div><div class="crumb">UNIDAD 3 · ENRUTAMIENTO ENTRE VLAN <span>/</span> <b id="u3LabCode">LAB-301</b></div><h1 id="u3LabTitle">Preparar las VLAN</h1><p id="u3LabSubtitle">Prepara los segmentos que se comunicarán mediante R1.</p><div class="guide-actions"><button id="u3InstructionsBtn" class="guide-button"><span>▣</span> Instrucciones</button><button id="u3HowBtn" class="guide-button secondary"><span>?</span> Cómo funciona</button></div></div>
+      <div class="progress-wrap"><div class="progress-label"><span>Progreso de la unidad</span><strong id="u3ProgressText">0%</strong></div><div class="progress"><span id="u3ProgressBar"></span></div></div>
+    </section>
+    <section class="workspace">
+      <div class="left-column">
+        <article class="card topology-card"><div class="card-title"><div><span class="step">1</span><strong>Topología</strong></div><span class="status-pill"><i></i> En línea</span></div>
+          <div class="u3-topology" aria-label="PC1 y PC2 conectados a SW1, y SW1 conectado mediante trunk a R1">
+            <button class="node pc device-node u3-pc1" data-u3-device="PC1"><span class="screen">›_</span><strong>PC1</strong><small>VLAN 10</small></button>
+            <div class="u3-link u3-link-pc1"><span>Gi0/1</span><i></i></div>
+            <button class="node switch active device-node u3-switch" data-u3-device="SW1"><span class="switch-icon"><b></b><b></b><b></b><b></b></span><strong>SW1</strong><small>Cisco IOS</small></button>
+            <div class="u3-link u3-trunk"><span>Gi0/3 · TRUNK</span><i></i></div>
+            <button class="node router device-node u3-router" data-u3-device="R1"><span class="router-icon"><b>↔</b></span><strong>R1</strong><small>Router IOS</small></button>
+            <div class="u3-branch"><span>Gi0/2</span><i></i></div>
+            <button class="node pc device-node u3-pc2" data-u3-device="PC2"><span class="screen">›_</span><strong>PC2</strong><small>VLAN 20</small></button>
+          </div>
+        </article>
+        <article class="terminal-card"><div class="terminal-head"><div><span class="step dark">2</span><strong id="u3TerminalTitle">Terminal · SW1</strong><span class="connected"><i></i> conectado</span><span class="save-status" id="u3SaveStatus">Sin sincronizar</span></div><div class="device-tabs u3-tabs"><button class="active" data-u3-device="SW1">SW1</button><button data-u3-device="R1">R1</button><button data-u3-device="PC1">PC1</button><button data-u3-device="PC2">PC2</button></div><button id="u3ClearBtn">Limpiar</button></div>
+          <div class="terminal" id="u3Terminal" tabindex="0"><div id="u3Output" class="output"></div><div class="input-row"><span id="u3Prompt">SW1&gt;</span><input id="u3Input" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Comando del laboratorio inter-VLAN"></div></div>
+          <div class="terminal-tip"><span>⌁</span><span id="u3Hint"><strong>Consejo:</strong> configura VLAN 10 y VLAN 20 antes de trabajar en R1.</span></div>
+        </article>
+      </div>
+      <aside class="side-column">
+        <article class="card unit-card"><div class="card-title"><div><span class="step">U3</span><strong>Ruta de la unidad</strong></div><span class="unit-count" id="u3Count">0/6</span></div><div class="lab-list" id="u3LabList"></div></article>
+        <article class="card mission-card"><div class="card-title"><div><span class="step">3</span><strong>Tu misión</strong></div><span class="points">Hasta 150 XP</span></div><p class="mission-copy" id="u3MissionCopy">Crea VLAN 10 USERS y VLAN 20 SERVERS en SW1.</p><p class="xp-rules">100 XP por completar · +20 al primer intento · +30 sin ayudas</p><div class="objectives" id="u3Objectives"></div><button class="validate" id="u3ValidateBtn" disabled>Completa los objetivos para validar</button><button class="reset" id="u3ResetBtn">↻ Reiniciar configuración</button><div id="u3Result" class="result"></div></article>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="successDialog">
+    <div class="success-icon">✓</div>
+    <h2>¡Laboratorio completado!</h2>
+    <p>Configuraste correctamente las VLAN, los puertos de acceso y los parámetros IPv4 de ambos equipos.</p>
+    <div class="xp-breakdown" id="xpBreakdown"></div>
+    <div class="new-badges" id="newBadges"></div>
+    <div class="score"><strong id="earnedXP">100</strong><span>XP ganados</span></div>
+    <p class="total-xp">Total acumulado: <strong><span id="dialogTotalXP">100</span> XP</strong></p>
+    <button id="closeDialog">Siguiente desafío</button>
+  </dialog>
+  <dialog id="u2SuccessDialog">
+    <div class="success-icon">✓</div>
+    <h2>¡Laboratorio completado!</h2>
+    <p id="u2SuccessCopy">Completaste: Trunk entre dos switches.</p>
+    <div class="xp-breakdown" id="u2XpBreakdown"></div>
+    <div class="score"><strong id="u2EarnedXP">0</strong><span>XP ganados</span></div>
+    <p class="total-xp">Progreso de la Unidad 2: <strong id="u2DialogProgress">1 de 6 · 17%</strong></p>
+    <button id="u2CloseSuccess">Siguiente desafío</button>
+  </dialog>
+  <dialog id="u3SuccessDialog">
+    <div class="success-icon">✓</div>
+    <h2>¡Laboratorio completado!</h2>
+    <p id="u3SuccessCopy">Completaste: Preparar las VLAN.</p>
+    <div class="xp-breakdown" id="u3XpBreakdown"></div>
+    <div class="score"><strong id="u3EarnedXP">0</strong><span>XP ganados</span></div>
+    <p class="total-xp">Progreso de la Unidad 3: <strong id="u3DialogProgress">1 de 6 · 17%</strong></p>
+    <button id="u3CloseSuccess">Siguiente desafío</button>
+  </dialog>
+  <dialog id="instructionsDialog" class="guide-dialog">
+    <button class="dialog-close guide-close" aria-label="Cerrar instrucciones">×</button>
+    <div class="guide-dialog-icon" aria-hidden="true">▣</div>
+    <p class="guide-kicker" id="instructionLabNumber">LABORATORIO 1</p>
+    <h2 id="instructionTitle">Crear una VLAN</h2>
+    <p id="instructionSubtitle">Lee la misión y completa sus objetivos.</p>
+    <div class="instruction-box">
+      <strong>Tu misión</strong>
+      <p id="instructionMission">Crea VLAN 10 y asígnale el nombre USERS.</p>
+    </div>
+    <div class="instruction-goals" id="instructionGoals"></div>
+    <button id="startMissionBtn" class="guide-primary">Comenzar laboratorio</button>
+  </dialog>
+  <dialog id="howItWorksDialog" class="guide-dialog how-dialog">
+    <button class="dialog-close guide-close" aria-label="Cerrar guía">×</button>
+    <div class="guide-dialog-icon book-icon" aria-hidden="true">▤</div>
+    <h2>Cómo funciona el laboratorio</h2>
+    <p>Completar una misión es muy sencillo.</p>
+    <div class="how-grid">
+      <div><span>1</span><strong>Lee la misión</strong><small>Revisa el objetivo que debes completar.</small></div>
+      <div><span>2</span><strong>Selecciona el equipo</strong><small>Elige el switch, router o PC que necesitas configurar.</small></div>
+      <div><span>3</span><strong>Configura el laboratorio</strong><small>Escribe los comandos o parámetros solicitados.</small></div>
+      <div><span>4</span><strong>Valida y continúa</strong><small>Presiona Validar y continuar.</small></div>
+    </div>
+    <button id="closeHowItWorksBtn" class="guide-primary">Entendido, comenzar</button>
+    <p class="guide-footnote">Esta guía se mostrará automáticamente solo una vez. Después podrás abrirla desde “Cómo funciona”.</p>
+  </dialog>
+  <dialog id="profileDialog" class="auth-dialog profile-dialog">
+    <div class="auth-brand"><span class="avatar profile-dialog-avatar" id="profileDialogAvatar">ES</span><div><strong>Editar perfil</strong><small>eClassVirtual Network Lab</small></div></div>
+    <button class="dialog-close" id="profileClose" aria-label="Cerrar">×</button>
+    <form id="profileForm" class="auth-form">
+      <h2>Nombre del estudiante</h2>
+      <p>Este nombre aparecerá en la sesión y en la clasificación.</p>
+      <label>Nombre o alias<input id="profileNameInput" type="text" minlength="2" maxlength="30" autocomplete="name" required></label>
+      <button type="submit">Guardar nombre</button>
+    </form>
+    <div class="auth-message" id="profileMessage" role="status"></div>
+  </dialog>
+  <dialog id="authDialog" class="auth-dialog">
+    <div class="auth-brand"><span class="brand-mark">e</span><div><strong>eClassVirtual</strong><small>Network Lab</small></div></div>
+    <button class="dialog-close" id="authClose" aria-label="Cerrar">×</button>
+    <form id="loginForm" class="auth-form">
+      <h2>Continúa tu aprendizaje</h2><p>Ingresa con el mismo correo y contraseña que usas en la plataforma.</p>
+      <label>Correo electrónico<input id="loginEmail" type="email" autocomplete="email" required></label>
+      <label>Contraseña<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Ingresar</button>
+    </form>
+    <div class="auth-message" id="authMessage" role="status"></div>
+    <p class="auth-help">¿No tienes cuenta? Créala en la plataforma.<br>¿Olvidaste tu contraseña? Recupérala en la plataforma.<a data-lms-link target="_blank" rel="noopener" hidden>Ir a la plataforma ↗</a></p>
+  </dialog>
+  <script src="app.js"></script>
+</body>
+</html>
